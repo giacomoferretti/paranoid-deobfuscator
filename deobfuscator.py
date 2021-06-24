@@ -5,42 +5,123 @@ import re
 import sys
 import argparse
 import subprocess
+import collections
+
+class ParanoidDeobfuscator:
+    def __init__(self):
+        pass
+
+    def _is_correct_encrypted_string(self, string):
+        # Minimun count of \\u is 2
+        if string.count('\\u') < 2:
+            return False
+
+        return True
+
+    def search_encrypted_strings(self, file):
+        strings = []
+
+        regex = re.compile(r'const-string\s+[vp][0-9]+,\s+\"((?:\\u[0-9a-f]{4})+?)\"')
+
+        with open(file) as f:
+            for line in f:
+                match = regex.search(line)
+                if match and self._is_correct_encrypted_string(match.group(1)):
+                    strings.append(match.group(1))
+
+        return strings
+
+    def _common_locations(self, path):
+        for folder in os.listdir(path):
+            # Check if is in a smali folder
+            if not folder.startswith('smali'):
+                continue
+
+            verboseprint('Searching in {}...'.format(os.path.join(path, folder)))
+
+            target_folder = os.path.join(path, folder, 'io', 'michaelrocks', 'paranoid')
+            if os.path.isdir(target_folder):
+                verboseprint('Found {}'.format(target_folder))
+                for file in os.listdir(target_folder):
+                    if not file.startswith('Deobfuscator') or not file.endswith('.smali'):
+                        continue
+
+                    verboseprint(' - {}'.format(file))
+
+                    encrypted_strings = self.search_encrypted_strings(os.path.join(target_folder, file))
+
+                    verboseprint('   - {}'.format(encrypted_strings))
+
+                    if encrypted_strings:
+                        verboseprint('Found {}'.format(encrypted_strings))
+                        return (os.path.join(target_folder, file), encrypted_strings)
+
+        return (None, None)
+
+    def search_deobfuscator_class(self, path):
+        # Search for common locations
+        # common = self._common_locations(path)
+        # if common[0] != None and common[1] != None:
+        #     return common
+
+        for root, _, filenames in os.walk(path):
+            # Check if is in a smali folder
+            if not root.startswith(os.path.join(path, 'smali')):
+                continue
+
+            for filename in filenames:
+                verboseprint(' - {}'.format(filename))
+                encrypted_strings = self.search_encrypted_strings(os.path.join(root, filename))
+                if encrypted_strings:
+                    #verboseprint('Found {}'.format(encrypted_strings))
+                    if self.get_deobfuscator_signature(os.path.join(root, filename)):
+                        return (os.path.join(root, filename), encrypted_strings)
+
+        return (None, None)
+
+    def get_deobfuscator_signature(self, file):
+        regex = re.compile(r'\.method\s+public\s+static\s+(\w+)\(J\)Ljava/lang/String;')
+
+        with open(file) as f:
+            for line in f:
+                match = regex.search(line)
+                if match:
+                    method = '{}(J)Ljava/lang/String;'.format(match.group(1))
+                    method_class = file.split('smali')[1].split('/', 1)[1][:-1]
+                    signature = 'L{};->{}'.format(method_class, method)
+
+                    verboseprint('Found {}'.format(signature))
+
+                    return signature
+
+        return None
 
 
-def search_encrypted_string(file):
-    regex = re.compile(r'const-string\s+[vp][0-9]+,\s+\"(.+?)\"')
+def main(args):
+    path = args.folder
+    if not os.path.isdir(path):
+        print('Target folder not found. Exiting...', file=sys.stderr)
+        sys.exit(1)
 
-    with open(file) as f:
-        for line in f:
-            match = regex.search(line)
-            if match:
-                encrypted_string = match.group(1)
+    deobfuscator = ParanoidDeobfuscator()
 
-                # TODO: Improve check
-                if encrypted_string.startswith('\\u'):
-                    if len(encrypted_string) % encrypted_string.count('\\u') == 0:
-                        return encrypted_string
+    # Search class
+    verboseprint('Searching DeobfuscatorHelper class...')
+    deobfuscator_class, encrypted_strings = deobfuscator.search_deobfuscator_class(path)
 
-    return None
+    if not deobfuscator_class:
+        sys.exit(1)
 
+    # Search signature
+    verboseprint('Extracting getString signature...')
+    signature = deobfuscator.get_deobfuscator_signature(deobfuscator_class)
 
-def search_deobfuscator_class(path):
-    # Common locations
-    for folder in os.listdir(path):
-        # Check if is in a smali folder
-        if not folder.startswith('smali'):
-            continue
+    if not deobfuscator_class or len(encrypted_strings) < 1 or not signature:
+        print('Paranoid was not found. Exiting...', file=sys.stderr)
+        sys.exit(1)
 
-        target_folder = os.path.join(path, folder, 'io', 'michaelrocks', 'paranoid')
-        if os.path.isdir(target_folder):
-            for file in os.listdir(target_folder):
-                if not file.startswith('Deobfuscator') or not file.endswith('.smali'):
-                    continue
-
-                encrypted_string = search_encrypted_string(os.path.join(target_folder, file))
-                if encrypted_string:
-                    return (os.path.join(target_folder, file), encrypted_string)
-
+    # Extract numbers
+    verboseprint('Searching for decryption numbers...')
 
     for root, _, filenames in os.walk(path):
         # Check if is in a smali folder
@@ -48,115 +129,84 @@ def search_deobfuscator_class(path):
             continue
 
         for filename in filenames:
-            encrypted_string = search_encrypted_string(os.path.join(root, filename))
-            if encrypted_string:
-                return (os.path.join(root, filename), encrypted_string)
 
-    return (None, None)
+            # TODO: SEPARATE FUNCTION - Process file
+            with open(os.path.join(root, filename)) as f:
+                data = f.readlines()
 
+            buffer = collections.deque(2*[''], 2)
 
-def get_deobfuscator_signature(base_folder, file):
-    # Strip base folder
-    target = file[len(base_folder):]
+            identifier = None
+            temp_output = None
 
-    with open(file) as f:
-        data = f.read()
-        m = re.search(r'\.method\s+public\s+static\s+(\w+)\(J\)Ljava/lang/String;', data)
-        if m:
-            method = '{}(J)Ljava/lang/String;'.format(m.group(1))
+            for line_num, line in enumerate(data):
 
-            # Remove smali folder
-            method_class = os.path.splitext('/'.join(target.split(os.sep)[1:]))[0]
+                # Found deobfuscation method
+                if signature in line:
+                    verboseprint('Found {}'.format(line.strip()))
 
-            return 'L{};->{}'.format(method_class, method)
+                    # Get identifier
+                    match = re.search(r'invoke-static\s+{([vp][0-9]+),', line)
+                    if match:
+                        identifier = match.group(1)
+                        verboseprint('Identifier: {}'.format(identifier))
 
-    return None
+                        # Search for deobfuscation number
+                        regex = re.compile(r'const-wide[/hig1632]*\s+' + identifier + r',\s+([-]*0x[a-f0-9]+)L*')
+                        for previous in buffer:
+                            match = regex.search(previous)
+                            if match:
+                                number = int(match.group(1), 16)
+                                verboseprint('Number: {}'.format(number))
 
-
-def findall(p, s):
-    i = s.find(p)
-    while i != -1:
-        yield (i, i+len(p), s[i:i+len(p)])
-        i = s.find(p, i+1)
-
-
-def insert_at(original, string, index):
-    return original[:index] + string + original[index:]
+                                #verboseprint('java -jar deobfuscator.jar {} {}'.format(bytes(encrypted_string, 'ascii').decode('unicode-escape'), number))
 
 
-def main(args):
-    path = args.folder
-    if not os.path.isdir(path):
-        print('target folder not found. Exiting...', file=sys.stderr)
-        exit(1)
 
-    # Search class
-    print('Searching DeobfuscatorHelper class...')
-    deobfuscator_class, encrypted_string = search_deobfuscator_class(path)
+                                # /!\ TODO: PLZ WTF EXTRACT THIS /!\ #
+                                stringssssss = []
+                                for bruh in encrypted_strings:
+                                    #print(bruh)
+                                    stringssssss.append(bytes(bruh, 'ascii').decode('unicode-escape'))
+                                #print(' '.join(stringssssss))
+                                # /!\ TODO: PLZ WTF EXTRACT THIS /!\ #
 
-    # Search deobfuscator signature
-    print('Extract getString signature...')
-    signature = get_deobfuscator_signature(path, deobfuscator_class)
 
-    if not deobfuscator_class or not encrypted_string or not signature:
-        print('Paranoid was not found. Exiting...', file=sys.stderr)
-        exit(1)
 
-    # Extract numbers
-    print('Searching for decryption numbers...')
-    regex = re.compile(r'const-wide[/hig1632]*\s+([vp][0-9]+),\s+([-]*0x[a-f0-9]+)L*')
-    for root, _, filenames in os.walk(path):
-        if root.startswith(os.path.join(path, 'smali')):
-            for filename in filenames:
-                #print(os.path.join(root, filename))
-                with open(os.path.join(root, filename), 'r+') as f:
-                    data = f.read()
+                                p = subprocess.Popen(['java', '-jar', 'deobfuscator.jar', '{}'.format(number), *stringssssss], stdout=subprocess.PIPE)
+                                response = p.communicate()[0]
 
-                    """print(os.path.join(root, filename))
-                    try:
-                        print(data.index(signature))
-                    except:
-                        continue"""
+                                with open(args.output, 'a') as out:
+                                    verboseprint(response)
+                                    out.write(response.decode())
+                                    out.write('\n')
 
-                    offset = 0
-                    for i in findall(signature, data):
-                        start, end, string = i
+                                temp_output = response.decode()
 
-                        start += offset
-                        end += offset
+                # We previously deobfuscated a string, replace it
+                if temp_output:
+                    match = re.search(r'move-result-object\s+([vp][0-9]+)', line)
+                    if match:
+                        data[line_num] = '{}const-string {}, "{}"{}'.format(data[line_num][:match.span()[0]], match.group(1), temp_output, data[line_num][match.span()[1]:])
+                        temp_output = None
 
-                        xxx = None
-                        for xxx in regex.finditer(data[:start]):
-                            pass
+                buffer.append(line)
 
-                        # Skip if not found
-                        if not xxx:
-                            continue
-
-                        m = re.search(r'\A\s*move-result-object\s+([vp][0-9]+)', data[end:])
-                        if not m:
-                            continue
-
-                        # Deobfuscate
-                        num = int(xxx.group(2), 16)
-                        print('Decrypting for {}...'.format(num))
-                        p = subprocess.Popen(['java', '-jar', 'deobfuscator.jar', bytes(encrypted_string, 'ascii').decode('unicode-escape'), '{}'.format(num)], stdout=subprocess.PIPE)
-                        response = p.communicate()[0].decode()
-
-                        mmmmmmm = 'const-string {}, "{}"'.format(m.group(1), response)
-                        offset += len(mmmmmmm)
-                        data = insert_at(data, mmmmmmm, m.span()[1]+end)
-
-                        offset -= (m.span()[1] + end) - xxx.span()[0]
-                        data = data[:xxx.span()[0]] + data[m.span()[1] + end:]
-
-                    f.seek(0)
-                    f.write(data)
-                    f.truncate()
+            with open(os.path.join(root, filename), 'w') as f:
+                f.writelines(data)
 
 
 if __name__ == '__main__':
-    # Setup arguments
     parser = argparse.ArgumentParser(description='Deobfuscate paranoid string encryption.')
-    parser.add_argument('folder', type=str, metavar='<folder>')
-    main(parser.parse_args())
+    parser.add_argument('folder', help='input folder generated with apktool', type=str, metavar='<folder>')
+    parser.add_argument('-v', '--verbose', help='increase output verbosity', action='store_true')
+    parser.add_argument('-o', '--output', nargs='?', help='output file containing strings')
+    args = parser.parse_args()
+
+    if args.verbose:
+        def verboseprint(*args, **kwargs):
+            print(*args, **kwargs)
+    else:
+        verboseprint = lambda *a, **k: None
+
+    main(args)
