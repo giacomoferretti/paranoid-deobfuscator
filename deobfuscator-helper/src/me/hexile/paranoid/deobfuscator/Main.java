@@ -17,6 +17,7 @@
 package me.hexile.paranoid.deobfuscator;
 
 import java.util.Arrays;
+import org.apache.commons.text.StringEscapeUtils;
 import io.michaelrocks.paranoid.DeobfuscatorHelper;
 
 public class Main {
@@ -61,6 +62,10 @@ public class Main {
         long number = Long.parseLong(args[0]);
 
         String[] chunks = Arrays.copyOfRange(args, 1, args.length);
+
+        for (int i = 0; i < chunks.length; i++) {
+            chunks[i] = StringEscapeUtils.unescapeJava(chunks[i]);
+        }
 
         System.out.print(escapeSmali(DeobfuscatorHelper.getString(number, chunks)));
     }

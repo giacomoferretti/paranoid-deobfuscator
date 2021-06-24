@@ -3,6 +3,7 @@
 import os
 import re
 import sys
+import base64
 import argparse
 import subprocess
 import collections
@@ -143,11 +144,14 @@ def main(args):
 
                 # Found deobfuscation method
                 if signature in line:
+                    verboseprint(os.path.join(root, filename))
                     verboseprint('Found {}'.format(line.strip()))
+                    #verboseprint(encrypted_strings)
 
                     # Get identifier
                     match = re.search(r'invoke-static\s+{([vp][0-9]+),', line)
                     if match:
+                        verboseprint(os.path.join(root, filename))
                         identifier = match.group(1)
                         verboseprint('Identifier: {}'.format(identifier))
 
@@ -159,27 +163,18 @@ def main(args):
                                 number = int(match.group(1), 16)
                                 verboseprint('Number: {}'.format(number))
 
-                                #verboseprint('java -jar deobfuscator.jar {} {}'.format(bytes(encrypted_string, 'ascii').decode('unicode-escape'), number))
+                                #print(['java', '-jar', 'deobfuscator.jar', '{}'.format(number), *encrypted_strings])
 
-
-
-                                # /!\ TODO: PLZ WTF EXTRACT THIS /!\ #
-                                stringssssss = []
-                                for bruh in encrypted_strings:
-                                    #print(bruh)
-                                    stringssssss.append(bytes(bruh, 'ascii').decode('unicode-escape'))
-                                #print(' '.join(stringssssss))
-                                # /!\ TODO: PLZ WTF EXTRACT THIS /!\ #
-
-
-
-                                p = subprocess.Popen(['java', '-jar', 'deobfuscator.jar', '{}'.format(number), *stringssssss], stdout=subprocess.PIPE)
+                                p = subprocess.Popen(['java', '-jar', 'deobfuscator.jar', '{}'.format(number), *encrypted_strings], stdout=subprocess.PIPE)
                                 response = p.communicate()[0]
 
-                                with open(args.output, 'a') as out:
-                                    verboseprint(response)
-                                    out.write(response.decode())
-                                    out.write('\n')
+                                print(response)
+
+                                if args.output:
+                                    with open(args.output, 'a') as out:
+                                        verboseprint(response)
+                                        out.write(response.decode())
+                                        out.write('\n')
 
                                 temp_output = response.decode()
 
