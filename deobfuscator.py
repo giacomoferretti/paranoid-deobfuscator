@@ -88,7 +88,8 @@ class ParanoidDeobfuscator:
                 match = regex.search(line)
                 if match:
                     method = '{}(J)Ljava/lang/String;'.format(match.group(1))
-                    method_class = file.split('smali')[1].split('/', 1)[1][:-1]
+                    method_class = file.split('smali')[1].split(os.sep, 1)[1][:-1]
+                    method_class = method_class.replace('\\', '/')
                     signature = 'L{};->{}'.format(method_class, method)
 
                     verboseprint('Found {}'.format(signature))
