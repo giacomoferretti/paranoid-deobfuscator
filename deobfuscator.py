@@ -178,6 +178,8 @@ def main(args):
                                         out.write('\n')
 
                                 temp_output = response.decode()
+                                # Otherwise it might complain
+                                break
 
                 # We previously deobfuscated a string, replace it
                 if temp_output:
