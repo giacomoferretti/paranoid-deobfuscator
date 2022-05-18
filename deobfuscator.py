@@ -158,7 +158,7 @@ def main(args):
 
                         # Search for deobfuscation number
                         regex = re.compile(r'const-wide[/hig1632]*\s+' + identifier + r',\s+([-]*0x[a-f0-9]+)L*')
-                        for previous in buffer:
+                        for previous in reversed(buffer):
                             match = regex.search(previous)
                             if match:
                                 number = int(match.group(1), 16)
