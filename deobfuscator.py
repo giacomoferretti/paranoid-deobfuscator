@@ -135,8 +135,8 @@ def main(args):
             # TODO: SEPARATE FUNCTION - Process file
             with open(os.path.join(root, filename)) as f:
                 data = f.readlines()
-
-            buffer = collections.deque(2*[''], 2)
+            # Increase buffer size
+            buffer = collections.deque(3*[''], 3)
 
             identifier = None
             temp_output = None
@@ -158,7 +158,7 @@ def main(args):
 
                         # Search for deobfuscation number
                         regex = re.compile(r'const-wide[/hig1632]*\s+' + identifier + r',\s+([-]*0x[a-f0-9]+)L*')
-                        for previous in buffer:
+                        for previous in reversed(buffer):
                             match = regex.search(previous)
                             if match:
                                 number = int(match.group(1), 16)
@@ -178,6 +178,8 @@ def main(args):
                                         out.write('\n')
 
                                 temp_output = response.decode()
+                                # Otherwise it might complain
+                                break
 
                 # We previously deobfuscated a string, replace it
                 if temp_output:
@@ -185,8 +187,9 @@ def main(args):
                     if match:
                         data[line_num] = '{}const-string {}, "{}"{}'.format(data[line_num][:match.span()[0]], match.group(1), temp_output, data[line_num][match.span()[1]:])
                         temp_output = None
-
-                buffer.append(line)
+                # Ignore empty lines --> not gonna get anything
+                if line.strip() != "":
+                    buffer.append(line)
 
             with open(os.path.join(root, filename), 'w') as f:
                 f.writelines(data)
