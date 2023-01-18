@@ -85,18 +85,14 @@ class ParanoidDeobfuscator:
 
     def get_deobfuscator_signature(self, file):
         regex = re.compile(r"\.method\s+public\s+static\s+(\w+)\(J\)Ljava/lang/String;")
+        regex1 = re.compile(r"\.method\s+public\s+static\s+constructor")
 
         with open(file) as f:
             for line in f:
                 match = regex.search(line)
-                if match:
-                    method = "{}(J)Ljava/lang/String;".format(match.group(1))
-                    method_class = file.split("smali")[1].split(os.sep, 1)[1][:-1]
-                    method_class = method_class.replace("\\", "/")
-                    signature = "L{};->{}".format(method_class, method)
-
-                    verboseprint("Found {}".format(signature))
-
+                match1 = regex1.search(line)
+                if match1:
+                    signature = 'Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;'
                     return signature
 
         return None
@@ -139,7 +135,7 @@ def main(args):
             with open(os.path.join(root, filename)) as f:
                 data = f.readlines()
             # Increase buffer size
-            buffer = collections.deque(3 * [""], 3)
+            buffer = collections.deque(5 * [""], 5)
 
             identifier = None
             temp_output = None
@@ -153,7 +149,7 @@ def main(args):
                     # verboseprint(encrypted_strings)
 
                     # Get identifier
-                    match = re.search(r"invoke-static\s+{([vp][0-9]+),", line)
+                    match = re.search(r"invoke-virtual\s+{([vp][0-9]+),", line)
                     if match:
                         verboseprint(os.path.join(root, filename))
                         identifier = match.group(1)
@@ -161,7 +157,7 @@ def main(args):
 
                         # Search for deobfuscation number
                         regex = re.compile(
-                            r"const-wide[/hig1632]*\s+" + identifier + r",\s+([-]*0x[a-f0-9]+)L*"
+                            r"const-wide[/hig1632]*\s+v.,\s+([-]*0x[a-f0-9]+)L*"
                         )
                         for previous in reversed(buffer):
                             match = regex.search(previous)
