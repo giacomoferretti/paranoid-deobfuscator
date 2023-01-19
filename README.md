@@ -10,6 +10,7 @@ Before | After
 ## Prerequisites
 * [Apktool]
 * Python 3
+  * `numpy` package (install it via `pip install numpy` or `pip install -r requirements.txt`)
 
 ## Usage
 1. Decode app with [Apktool]: `apktool d app.apk`
