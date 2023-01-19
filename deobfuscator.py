@@ -8,6 +8,83 @@ import re
 import subprocess
 import sys
 
+import numpy as np
+
+np.warnings.simplefilter("ignore", RuntimeWarning)
+
+MAX_CHUNK_LENGTH = 0x1FFF
+
+
+def RandomHelper_seed(x):
+    z = (np.uint64(x) ^ (np.uint64(x) >> np.uint64(33))) * np.uint64(0x62A9D9ED799705F5)
+    y = (np.uint64(z) ^ (np.uint64(z) >> np.uint64(28))) * np.uint64(0xCB24D0A5C88C35B3)
+    return np.int64(np.uint64(y) >> np.uint64(32))
+
+
+def RandomHelper_next(state):
+    s0 = np.int16(np.uint64(state) & np.uint64(0xFFFF))
+    s1 = np.int16(np.uint64(state) >> np.uint64(16) & np.uint64(0xFFFF))
+    next = s0
+    next += s1
+    next = RandomHelper_rotl(next, 9)
+    next += s0
+
+    s1 = np.int16(np.uint16(s1) ^ np.uint16(s0))
+    s0 = RandomHelper_rotl(s0, 13)
+    s0 = np.int16(np.uint16(s0) ^ np.uint16(s1))
+    s0 = np.int16(np.uint16(s0) ^ np.uint16(np.uint16(s1) << np.uint16(5)))
+    s1 = RandomHelper_rotl(s1, 10)
+
+    result = next
+    result <<= 16
+    result |= s1
+    result <<= 16
+    result |= s0
+    return result
+
+
+def RandomHelper_rotl(x, k):
+    return np.int16((np.uint32(x) << np.uint32(k)) | (np.uint32(x) >> (32 - np.uint32(k))))
+
+
+def DeobfuscatorHelper_getString(id, chunks):
+    state = RandomHelper_seed(np.uint64(id) & np.uint64(0xFFFFFFFF))
+    state = RandomHelper_next(state)
+    low = np.int64((np.uint64(state) >> np.uint64(32)) & np.uint64(0xFFFF))
+    state = RandomHelper_next(state)
+    high = np.int64((np.uint64(state) >> np.uint64(16)) & np.uint64(0xFFFF0000))
+    index = np.int32((np.uint64(id) >> np.uint64(32)) ^ np.uint64(low) ^ np.uint64(high))
+    state = DeobfuscatorHelper_getCharAt(index, chunks, state)
+    length = np.int32((np.uint64(state) >> np.uint64(32)) & np.uint64(0xFFFF))
+
+    print(length)
+
+    output = []
+
+    for x in range(length):
+        state = DeobfuscatorHelper_getCharAt(index + x + 1, chunks, state)
+        output.append(state >> 32 & 0xFFFF)
+
+    return "".join(map(chr, output))
+
+
+def DeobfuscatorHelper_getCharAt(char_index, chunks, state):
+    next_state = RandomHelper_next(state)
+    chunk = chunks[int(char_index / MAX_CHUNK_LENGTH)]
+
+    return np.int64(
+        np.uint64(next_state)
+        ^ (
+            np.uint64(
+                np.frombuffer(
+                    chunk[int(char_index % MAX_CHUNK_LENGTH)].encode("utf-16")[2:],
+                    dtype=np.uint16,
+                )[0]
+            )
+            << np.uint16(32)
+        )
+    )
+
 
 class ParanoidDeobfuscator:
     def __init__(self):
@@ -150,7 +227,6 @@ def main(args):
                 if signature in line:
                     verboseprint(os.path.join(root, filename))
                     verboseprint("Found {}".format(line.strip()))
-                    # verboseprint(encrypted_strings)
 
                     # Get identifier
                     match = re.search(r"invoke-static\s+{([vp][0-9]+),", line)
@@ -169,29 +245,23 @@ def main(args):
                                 number = int(match.group(1), 16)
                                 verboseprint("Number: {}".format(number))
 
-                                # print(['java', '-jar', 'deobfuscator.jar', '{}'.format(number), *encrypted_strings])
-
-                                p = subprocess.Popen(
+                                response = DeobfuscatorHelper_getString(
+                                    number,
                                     [
-                                        "java",
-                                        "-jar",
-                                        "deobfuscator.jar",
-                                        "{}".format(number),
-                                        *encrypted_strings,
+                                        x.encode().decode("unicode-escape")
+                                        for x in encrypted_strings
                                     ],
-                                    stdout=subprocess.PIPE,
                                 )
-                                response = p.communicate()[0]
 
                                 print(response)
 
                                 if args.output:
                                     with open(args.output, "a") as out:
                                         verboseprint(response)
-                                        out.write(response.decode())
+                                        out.write(response)
                                         out.write("\n")
 
-                                temp_output = response.decode()
+                                temp_output = response
                                 # Otherwise it might complain
                                 break
 
