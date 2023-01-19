@@ -7,7 +7,7 @@ Before | After
 :-:|:-:
 ![Before](.assets/before.png) | ![After](.assets/after.png)
 
-## Prerequisites
+## Requirements
 * [Apktool]
 * Python 3
   * `numpy` package (install it via `pip install numpy` or `pip install -r requirements.txt`)
