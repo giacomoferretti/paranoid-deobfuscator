@@ -65,7 +65,7 @@ def DeobfuscatorHelper_getString(id, chunks):
         state = DeobfuscatorHelper_getCharAt(index + x + 1, chunks, state)
         output.append(state >> 32 & 0xFFFF)
 
-    return "".join(map(chr, output))
+    return "".join(map(chr, output)).encode("utf-16", "surrogatepass").decode("utf-16")
 
 
 def DeobfuscatorHelper_getCharAt(char_index, chunks, state):
