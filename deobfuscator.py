@@ -7,10 +7,11 @@ import os
 import re
 import subprocess
 import sys
+import warnings
 
 import numpy as np
 
-np.warnings.simplefilter("ignore", RuntimeWarning)
+warnings.simplefilter("ignore", RuntimeWarning)
 
 MAX_CHUNK_LENGTH = 0x1FFF
 
