@@ -80,7 +80,9 @@ def DeobfuscatorHelper_getCharAt(char_index, chunks, state):
         ^ (
             np.uint64(
                 np.frombuffer(
-                    chunk[int(char_index % MAX_CHUNK_LENGTH)].encode("utf-16")[2:],
+                    chunk[int(char_index % MAX_CHUNK_LENGTH)].encode("utf-16", "surrogatepass")[
+                        2:
+                    ],
                     dtype=np.uint16,
                 )[0]
             )
