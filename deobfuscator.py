@@ -277,7 +277,7 @@ def main(args):
                         data[line_num] = '{}const-string {}, "{}"{}'.format(
                             data[line_num][: match.span()[0]],
                             match.group(1),
-                            temp_output,
+                            temp_output.replace('"', '\\"').replace("\n", "\\n"),
                             data[line_num][match.span()[1] :],
                         )
                         temp_output = None
