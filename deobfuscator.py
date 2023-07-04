@@ -49,14 +49,16 @@ def RandomHelper_rotl(x, k):
 
 
 def DeobfuscatorHelper_getString(id, chunks):
-    state = RandomHelper_seed(np.uint64(id) & np.uint64(0xFFFFFFFF))
+    state = RandomHelper_seed(np.array(id).astype(np.uint64) & np.uint64(0xFFFFFFFF))
     state = RandomHelper_next(state)
-    low = np.int64((np.uint64(state) >> np.uint64(32)) & np.uint64(0xFFFF))
+    low = np.int64((np.array(state).astype(np.uint64) >> np.uint64(32)) & np.uint64(0xFFFF))
     state = RandomHelper_next(state)
-    high = np.int64((np.uint64(state) >> np.uint64(16)) & np.uint64(0xFFFF0000))
-    index = np.int32((np.uint64(id) >> np.uint64(32)) ^ np.uint64(low) ^ np.uint64(high))
+    high = np.int64((np.array(state).astype(np.uint64) >> np.uint64(16)) & np.uint64(0xFFFF0000))
+    index = np.int32(
+        (np.array(id).astype(np.uint64) >> np.uint64(32)) ^ np.uint64(low) ^ np.uint64(high)
+    )
     state = DeobfuscatorHelper_getCharAt(index, chunks, state)
-    length = np.int32((np.uint64(state) >> np.uint64(32)) & np.uint64(0xFFFF))
+    length = np.int32((np.array(state).astype(np.uint64) >> np.uint64(32)) & np.uint64(0xFFFF))
 
     print(length)
 
