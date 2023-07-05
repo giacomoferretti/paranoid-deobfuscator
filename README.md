@@ -2,6 +2,8 @@
 
 A script to deobfuscate apps obfuscated with [Paranoid]/[LSParanoid] to help you with static analysis.
 
+NOTE: Only compatible with Paranoid v0.3.0+ (released in 25 Jan 2020)
+
 |            Before             |            After            |
 | :---------------------------: | :-------------------------: |
 | ![Before](.assets/before.png) | ![After](.assets/after.png) |
