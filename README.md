@@ -1,5 +1,7 @@
 # Paranoid/LSParanoid deobfuscator
 
+![PyPI - Version](https://img.shields.io/pypi/v/paranoid-deobfuscator)
+
 A script to deobfuscate apps obfuscated with [Paranoid]/[LSParanoid] to help you with static analysis.
 
 NOTE: ⚠️ Currently not working on Windows. Please use WSL or a Linux VM. See [#14](https://github.com/giacomoferretti/paranoid-deobfuscator/issues/14).
@@ -12,14 +14,15 @@ NOTE: Only compatible with Paranoid v0.3.0+ (released in 25 Jan 2020)
 
 ## Installation
 
-<!-- `pip install paranoid-deobfuscator` SOON -->
+### Using pip
 
-`python setup.py install`
+`pip install paranoid-deobfuscator`
 
-## Requirements
+### Manual
 
-- Python 3
-  - `numpy` package (install it via `pip install numpy` or `pip install -r requirements.txt`)
+1. `git clone https://github.com/giacomoferretti/paranoid-deobfuscator`
+2. `cd paranoid-deobfuscator`
+3. `pip install .`
 
 ## Usage
 
