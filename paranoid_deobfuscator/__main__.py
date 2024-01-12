@@ -22,7 +22,10 @@ from typing import List
 
 import paranoid_deobfuscator as deobfuscator
 
-REMOVED_COMMENT = "    # Removed with https://github.com/giacomoferretti/paranoid-deobfuscator\n"
+REMOVED_COMMENT = (
+    "    # Removed with https://github.com/giacomoferretti/paranoid-deobfuscator\n"
+)
+INSTRUCTION_BUFFER = 20
 
 
 def search_candidates(target: pathlib.Path):
@@ -38,7 +41,9 @@ def search_candidates(target: pathlib.Path):
     return candidates
 
 
-def search_deobfuscator(target: pathlib.Path, candidate: pathlib.Path, is_apktool: bool):
+def search_deobfuscator(
+    target: pathlib.Path, candidate: pathlib.Path, is_apktool: bool
+):
     with open(candidate) as f:
         method = deobfuscator.extract_deobfuscator_method(f.read())
 
@@ -133,7 +138,6 @@ def main(args):
             logger.debug(f"   - {x[0]}: {x[1]}")
 
     # 4. Deobfuscate
-
     for file, decoded_strings in obfuscated_files.items():
         logger.info(f"Processing {file}")
         with open(file) as f:
@@ -145,35 +149,51 @@ def main(args):
             identifier = deobfuscator.extract_identifier_from_invoke(lines[line_num])
             logger.debug(f" - identifier {identifier}")
 
-            # Clear matching const-wide (max 20 lines up, this number is arbitrary, is not necessary)
-            for i, x in enumerate(reversed(lines[line_num - 20 : line_num])):
+            # Clear matching const-wide
+            for i, x in enumerate(
+                reversed(lines[line_num - INSTRUCTION_BUFFER : line_num])
+            ):
                 x = x.strip()
+
+                # Skip empty lines, comments, labels and directives
+                if not x or x.startswith("#") or x.startswith(".") or x.startswith(":"):
+                    continue
+
                 if x.startswith("const-wide"):
                     m = deobfuscator.CONST_WIDE_REGEX.match(x)
                     if m and identifier == m.group(1):
                         lines[line_num - i - 1] = REMOVED_COMMENT
-
-                        # Keep .smali clean
-                        # if not lines[line_num - i - 1].strip():
-                        #     lines[line_num - i - 2] = ""
-
                         break
 
-            # Replace matching move-result-object (max 20 lines down, this number is arbitrary, is not necessary)
-            for i, x in enumerate(lines[line_num : line_num + 20]):
+            # Search for move-result-object
+            # The next instruction should be move-result-object, because getString() returns a String object
+            # If not, it's probably a useless call that was optimized
+            for i, x in enumerate(
+                lines[line_num + 1 : line_num + 1 + INSTRUCTION_BUFFER]
+            ):
                 x = x.strip()
-                if x.startswith("move-result-object"):
-                    m = deobfuscator.MOVE_RESULT_OBJECT_REGEX.match(x)
-                    if m and identifier == m.group(1):
-                        lines[line_num + i] = f'    const-string {identifier}, "{deobfuscated}"\n'
-                        break
 
-            # Clear invoke-static
+                # Skip empty lines, comments, labels and directives
+                if not x or x.startswith("#") or x.startswith(".") or x.startswith(":"):
+                    continue
+
+                # If next instruction is not move-result-object, break
+                if not x.startswith("move-result-object"):
+                    logger.debug(
+                        f'Could not find move-result-object, probably useless call (string was: "{deobfuscated}")'
+                    )
+                    break
+
+                # Extract identifier
+                m = deobfuscator.MOVE_RESULT_OBJECT_REGEX.match(x)
+                if m:
+                    lines[
+                        line_num + 1 + i
+                    ] = f'    const-string {m.group(1)}, "{deobfuscated}"\n'
+                break
+
+            # Clear invoke-static call
             if not keep_calls:
-                # Keep .smali clean
-                # if not lines[line_num - 1].strip():
-                #     lines[line_num - 1] = ""
-
                 lines[line_num] = REMOVED_COMMENT
 
         with open(file, "w") as f:
@@ -181,7 +201,9 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Deobfuscate paranoid string encryption.")
+    parser = argparse.ArgumentParser(
+        description="Deobfuscate paranoid string encryption."
+    )
     parser.add_argument(
         "target",
         help="apktool folder or dex file",
@@ -195,11 +217,13 @@ if __name__ == "__main__":
         action="store_true",
     )
 
-    # parser.add_argument(
-    #     "-s",
-    #     "--deobfuscator",
-    #     type=pathlib.Path,
-    # )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_const",
+        dest="loglevel",
+        const=logging.INFO,
+    )
 
     parser.add_argument(
         "-d",
@@ -208,13 +232,6 @@ if __name__ == "__main__":
         dest="loglevel",
         const=logging.DEBUG,
         default=logging.WARNING,
-    )
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        action="store_const",
-        dest="loglevel",
-        const=logging.INFO,
     )
 
     args = parser.parse_args()
