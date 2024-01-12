@@ -18,6 +18,7 @@ import argparse
 import logging
 import pathlib
 import sys
+from typing import List
 
 import paranoid_deobfuscator as deobfuscator
 
@@ -51,7 +52,7 @@ def search_deobfuscator(target: pathlib.Path, candidate: pathlib.Path, is_apktoo
     return None
 
 
-def decode_unicode(chunks):
+def decode_unicode(chunks: List[str]):
     return [x.encode().decode("unicode-escape") for x in chunks]
 
 
