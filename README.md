@@ -22,6 +22,10 @@ A script to deobfuscate apps obfuscated with [Paranoid]/[LSParanoid] to help you
 
 `pip install paranoid-deobfuscator`
 
+### Using pipx
+
+`pipx install paranoid-deobfuscator`
+
 <!-- ### Manual
 
 1. `git clone https://github.com/giacomoferretti/paranoid-deobfuscator`
