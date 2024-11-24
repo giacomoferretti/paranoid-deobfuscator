@@ -12,16 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version_major__ = 3
-__version_minor__ = 0
-__version_patch__ = 0
-__version_metadata__ = ""
-__version__ = f"{__version_major__}.{__version_minor__}.{__version_patch__}{__version_metadata__}"
-__issue_tracker__ = "https://github.com/giacomoferretti/paranoid-deobfuscator/issues"
-
-
-def report_github_issue_message(data: str | None = None) -> str:  # pragma: no cover
-    result = f"Please report this issue at {__issue_tracker__}"
-    if data:
-        result += f"\n\nReport information:\n{data}"
-    return result
+PARANOID_GET_STRING_CONST_SIGNATURE = [
+    4294967295,
+    33,
+    7109453100751455733,
+    28,
+    -3808689974395783757,
+    32,
+    65535,
+    16,
+    -65536,
+    0,
+]
+PARANOID_GET_STRING_ARGUMENTS = ["J"]
+PARANOID_GET_STRING_RETURN_TYPE = "Ljava/lang/String;"
