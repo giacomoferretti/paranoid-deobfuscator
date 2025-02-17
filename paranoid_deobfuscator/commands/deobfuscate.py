@@ -23,8 +23,9 @@ from typing import Any, Dict, List, TypedDict
 import click
 
 from .. import __version__ as deobfuscator_version
-from .. import constants, paranoid
+from .. import constants, paranoid, report_github_issue_message
 from ..encoding import decode_unicode_chunks, encode_smali_string
+from ..smali import register
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,12 @@ REMOVED_COMMENT = (
 
 
 class ParanoidSmaliDeobfuscator:
+    class SmaliRegisterEncoder(json.JSONEncoder):
+        def default(self, o):
+            if isinstance(o, register.SmaliRegister):
+                return o.to_dict()
+            return super().default(o)
+
     class ParanoidSmaliDeobfuscatorError(Exception):
         def __init__(self, message: str, extra: Dict[str, Any] = {}):
             super().__init__(message)
@@ -44,12 +51,13 @@ class ParanoidSmaliDeobfuscator:
             if not self.extra:
                 return super().__str__()
 
-            return f"{super().__str__()}\n{json.dumps(self.extra, indent=4)}"
+            return f"{super().__str__()}\n{json.dumps(self.extra, indent=4, cls=ParanoidSmaliDeobfuscator.SmaliRegisterEncoder)}"
 
     class State(TypedDict):
         class_name: str
         registers: Dict[str, paranoid.register.SmaliRegister]
         last_deobfuscated_string: str | None
+        inside_try_block: bool
 
     def __init__(
         self,
@@ -58,6 +66,7 @@ class ParanoidSmaliDeobfuscator:
         obfuscated_chunks: List[str],
         # edit_in_place: bool = True,
     ):
+        self.filepath = filepath
         # if edit_in_place:
         #     self.file = open(filepath, "r+")
         # else:
@@ -74,6 +83,7 @@ class ParanoidSmaliDeobfuscator:
             "class_name": "",
             "registers": {},
             "last_deobfuscated_string": None,
+            "inside_try_block": False,
         }
 
         if key_to_reset:
@@ -94,7 +104,19 @@ class ParanoidSmaliDeobfuscator:
     def __exit__(self, exc_type, exc_value, traceback):
         self.file.close()
 
-    def process(self, line: str) -> str | None:
+    def process(self, line: str, line_num: int) -> str | None:
+        # Reset the state if the result from the getString method is not used
+        if self.state["last_deobfuscated_string"] and line.startswith("invoke"):
+            self.state["last_deobfuscated_string"] = None
+
+        if line.startswith(":try_start"):
+            self.state["inside_try_block"] = True
+            return
+
+        if line.startswith(":try_end"):
+            self.state["inside_try_block"] = False
+            return
+
         # Get fully qualified class name
         if line.startswith(".class"):
             self.state["class_name"] = self.get_fully_qualified_class_name(line)
@@ -141,8 +163,13 @@ class ParanoidSmaliDeobfuscator:
 
             first_register = instr.registers[0]
 
+            # Get the value of the register
+            register_value = self.state["registers"].get(first_register)
+
             # TODO: parameters are not supported
-            if first_register.startswith("p"):
+            # This is a limitation of the current implementation.
+            # It is possible to support them, but it would require a more complex approach.
+            if first_register.startswith("p") and not register_value:
                 raise ParanoidSmaliDeobfuscator.ParanoidSmaliDeobfuscatorError(
                     "Parameters are not supported",
                     extra={
@@ -152,8 +179,6 @@ class ParanoidSmaliDeobfuscator:
                     },
                 )
 
-            # Get the value of the register
-            register_value = self.state["registers"].get(first_register)
             if not register_value:
                 raise ParanoidSmaliDeobfuscator.ParanoidSmaliDeobfuscatorError(
                     "Register not found",
@@ -179,6 +204,11 @@ class ParanoidSmaliDeobfuscator:
             deobfuscated_string = paranoid.deobfuscate_string(register_value.value, self.obfuscated_chunks, True)
             self.state["last_deobfuscated_string"] = deobfuscated_string
 
+            # Edge case: if we are inside a try block, we need to have at least one valid instruction,
+            # so we add a nop instruction, otherwise the smali file will be invalid and the APK will recompile
+            if self.state["inside_try_block"]:
+                return f"    nop {REMOVED_COMMENT.strip()}"
+
             return REMOVED_COMMENT
 
         # Move result object
@@ -197,7 +227,7 @@ class ParanoidSmaliDeobfuscator:
 
         return
 
-    def update(self, _line: str):
+    def update(self, _line: str, line_num: int = 0):
         line = _line.strip()
 
         # Skip empty lines
@@ -206,10 +236,22 @@ class ParanoidSmaliDeobfuscator:
             return
 
         # Process the line
-        updated_line = self.process(line)
-        if updated_line is not None:
-            self.tmp_file.write(updated_line + "\n")
-            return
+        try:
+            updated_line = self.process(line, line_num)
+            if updated_line is not None:
+                self.tmp_file.write(updated_line + "\n")
+                return
+        except ParanoidSmaliDeobfuscator.ParanoidSmaliDeobfuscatorError as e:
+            # Ignore Parameters are not supported
+            if e.args[0] == "Parameters are not supported":
+                logger.warning(f"{self.filepath}:{line_num+1}: Detected unsupported method call")
+                # Add the line to the temporary file
+                self.tmp_file.write(_line)
+                return
+
+            # Log and raise the error
+            logger.error(report_github_issue_message(str(e)))
+            raise e
 
         # Add the line to the temporary file
         self.tmp_file.write(_line)
@@ -281,8 +323,8 @@ def cli(target: str):
     # Second pass: deobfuscate file
     for smali_file in target_directory.rglob("*.smali"):
         with ParanoidSmaliDeobfuscator(smali_file, get_string_method, chunks) as deobfuscator:
-            for line in deobfuscator.file:
-                deobfuscator.update(line)
+            for line_num, line in enumerate(deobfuscator.file):
+                deobfuscator.update(line, line_num)
 
         # Replace the original file with the temporary one
         shutil.move(deobfuscator.tmp_file.name, smali_file)
