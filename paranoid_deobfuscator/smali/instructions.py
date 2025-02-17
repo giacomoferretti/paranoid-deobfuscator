@@ -43,9 +43,10 @@ MOVE_RESULT = re.compile(r"move-result(?:-(?:wide|object))?\s+([vp][0-9]+)")  # 
 
 
 class SmaliInstrConst:
-    def __init__(self, register: str, value: int):
+    def __init__(self, register: str, value: int, _raw: str | None = None):
         self.register = register
         self.value = value
+        self._raw = _raw
 
     @staticmethod
     def parse(data: str):
@@ -58,7 +59,7 @@ class SmaliInstrConst:
         register = m.group(1)
         value = int(m.group(2), 0)
 
-        return SmaliInstrConst(register, value)
+        return SmaliInstrConst(register, value, _raw=data)
 
     def __eq__(self, other: Any):
         if not isinstance(other, self.__class__):
@@ -68,9 +69,10 @@ class SmaliInstrConst:
 
 
 class SmaliInstrConstString:
-    def __init__(self, register: str, value: str):
+    def __init__(self, register: str, value: str, _raw: str | None = None):
         self.register = register
         self.value = value
+        self._raw = _raw
 
     @staticmethod
     def parse(data: str):
@@ -83,7 +85,7 @@ class SmaliInstrConstString:
         register = m.group(1)
         value = m.group(2)
 
-        return SmaliInstrConstString(register, value)
+        return SmaliInstrConstString(register, value, _raw=data)
 
     def __eq__(self, other: Any):
         if not isinstance(other, self.__class__):
@@ -93,10 +95,11 @@ class SmaliInstrConstString:
 
 
 class SmaliInstrInvokeStatic:
-    def __init__(self, registers: list[str], class_name: str, method: str):
+    def __init__(self, registers: list[str], class_name: str, method: str, _raw: str | None = None):
         self.registers = registers
         self.class_name = class_name
         self.method = method
+        self._raw = _raw
 
     @staticmethod
     def parse(data: str):
@@ -110,7 +113,7 @@ class SmaliInstrInvokeStatic:
         class_name = m.group(2)
         method = m.group(3)
 
-        return SmaliInstrInvokeStatic(registers, class_name, method)
+        return SmaliInstrInvokeStatic(registers, class_name, method, _raw=data)
 
     def __eq__(self, other: Any):
         if not isinstance(other, self.__class__):
@@ -120,10 +123,11 @@ class SmaliInstrInvokeStatic:
 
 
 class SmaliInstrNewArray:
-    def __init__(self, register: str, size_register: str, type_descriptor: str):
+    def __init__(self, register: str, size_register: str, type_descriptor: str, _raw: str | None = None):
         self.register = register
         self.size_register = size_register
         self.type_descriptor = type_descriptor
+        self._raw = _raw
 
     @staticmethod
     def parse(data: str):
@@ -137,7 +141,7 @@ class SmaliInstrNewArray:
         size_register = m.group(2)
         type_descriptor = m.group(3)
 
-        return SmaliInstrNewArray(register, size_register, type_descriptor)
+        return SmaliInstrNewArray(register, size_register, type_descriptor, _raw=data)
 
     def __eq__(self, other: Any):
         if not isinstance(other, self.__class__):
@@ -151,10 +155,11 @@ class SmaliInstrNewArray:
 
 
 class SmaliInstrAGetAPut:
-    def __init__(self, register_dest: str, register_array: str, register_index: str):
+    def __init__(self, register_dest: str, register_array: str, register_index: str, _raw: str | None = None):
         self.register_dest = register_dest
         self.register_array = register_array
         self.register_index = register_index
+        self._raw = _raw
 
     @staticmethod
     def parse(data: str):
@@ -168,7 +173,7 @@ class SmaliInstrAGetAPut:
         register_array = m.group(2)
         register_index = m.group(3)
 
-        return SmaliInstrAGetAPut(register_dest, register_array, register_index)
+        return SmaliInstrAGetAPut(register_dest, register_array, register_index, _raw=data)
 
     def __eq__(self, other: Any):
         if not isinstance(other, self.__class__):
@@ -182,11 +187,12 @@ class SmaliInstrAGetAPut:
 
 
 class SmaliInstrSGetSPut:
-    def __init__(self, register_dest: str, class_name: str, field_name: str, field_type: str):
+    def __init__(self, register_dest: str, class_name: str, field_name: str, field_type: str, _raw: str | None = None):
         self.register_dest = register_dest
         self.class_name = class_name
         self.field_name = field_name
         self.field_type = field_type
+        self._raw = _raw
 
     @staticmethod
     def parse(data: str):
@@ -202,7 +208,7 @@ class SmaliInstrSGetSPut:
         field_name = m.group(4)
         field_type = m.group(5)
 
-        return SmaliInstrSGetSPut(register_dest, class_name, field_name, field_type)
+        return SmaliInstrSGetSPut(register_dest, class_name, field_name, field_type, _raw=data)
 
     def __eq__(self, other: Any):
         if not isinstance(other, self.__class__):
@@ -217,8 +223,9 @@ class SmaliInstrSGetSPut:
 
 
 class SmaliInstrMoveResult:
-    def __init__(self, register: str):
+    def __init__(self, register: str, _raw: str | None = None):
         self.register = register
+        self._raw = _raw
 
     @staticmethod
     def parse(data: str):
@@ -230,7 +237,7 @@ class SmaliInstrMoveResult:
 
         register = m.group(1)
 
-        return SmaliInstrMoveResult(register)
+        return SmaliInstrMoveResult(register, _raw=data)
 
     def __eq__(self, other: Any):
         if not isinstance(other, self.__class__):
