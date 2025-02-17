@@ -50,6 +50,15 @@ Commands:
 ```
 
 ```text
+Usage: paranoid-deobfuscator deobfuscate [OPTIONS] TARGET
+
+  Deobfuscate a paranoid obfuscated APK smali files
+
+Options:
+  --help  Show this message and exit.
+```
+
+```text
 $ paranoid-deobfuscator helpers --help
 
 Usage: paranoid-deobfuscator helpers [OPTIONS] COMMAND [ARGS]...
