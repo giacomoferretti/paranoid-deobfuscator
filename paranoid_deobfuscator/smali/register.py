@@ -53,8 +53,6 @@ class SmaliRegisterArray(SmaliRegister):
     def validate_value(self, value):
         if not isinstance(value, list):
             raise ValueError("For 'array', value must be a list")
-        # if not all(isinstance(item, str) for item in value):
-        #     raise ValueError("All elements in the 'array' value must be strings")
 
     @classmethod
     def get_type(cls):
