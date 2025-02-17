@@ -34,10 +34,10 @@ AGET_APUT = re.compile(
     r"a(?:put|get)(?:-(?:wide|object|boolean|byte|char|short))?\s+([vp][0-9]+),\s+([vp][0-9]+),\s+([vp][0-9]+)"
 )
 SGET_SPUT = re.compile(
-    r"s(?:put|get)(?:-(?:wide|object|boolean|byte|char|short))?\s+([vp][0-9]+),\s+((L[a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/]+;)->([a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/]+):(\[*(?:L[a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/]+;|[VZBSCIJFD])))"
+    r"s(?:put|get)(?:-(?:wide|object|boolean|byte|char|short))?\s+([vp][0-9]+),\s+((L[a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/]+;)->([a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF]+):(\[*(?:L[a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/]+;|[VZBSCIJFD])))"
 )
 INVOKE_STATIC = re.compile(
-    r"invoke-static\s+{([vp][0-9]+(?:,\s*[vp][0-9]+)*)},\s+(L[a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF]+;)->([a-zA-Z0-9$_\- /\[\(\);]+)"
+    r"invoke-static\s+{([vp][0-9]+(?:,\s*[vp][0-9]+)*)},\s+(L[a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/]+;)->([[a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/\[\(\);]+)"
 )
 MOVE_RESULT = re.compile(r"move-result(?:-(?:wide|object))?\s+([vp][0-9]+)")
 
