@@ -61,7 +61,7 @@ class SmaliInstrConst:
         return SmaliInstrConst(register, value)
 
     def __eq__(self, other: Any):
-        if not isinstance(self, other.__class__):
+        if not isinstance(other, self.__class__):
             return NotImplemented
 
         return self.register == other.register and self.value == other.value
@@ -86,7 +86,7 @@ class SmaliInstrConstString:
         return SmaliInstrConstString(register, value)
 
     def __eq__(self, other: Any):
-        if not isinstance(self, other.__class__):
+        if not isinstance(other, self.__class__):
             return NotImplemented
 
         return self.register == other.register and self.value == other.value
@@ -113,7 +113,7 @@ class SmaliInstrInvokeStatic:
         return SmaliInstrInvokeStatic(registers, class_name, method)
 
     def __eq__(self, other: Any):
-        if not isinstance(self, other.__class__):
+        if not isinstance(other, self.__class__):
             return NotImplemented
 
         return self.registers == other.registers and self.class_name == other.class_name and self.method == other.method
@@ -140,7 +140,7 @@ class SmaliInstrNewArray:
         return SmaliInstrNewArray(register, size_register, type_descriptor)
 
     def __eq__(self, other: Any):
-        if not isinstance(self, other.__class__):
+        if not isinstance(other, self.__class__):
             return NotImplemented
 
         return (
@@ -171,7 +171,7 @@ class SmaliInstrAGetAPut:
         return SmaliInstrAGetAPut(register_dest, register_array, register_index)
 
     def __eq__(self, other: Any):
-        if not isinstance(self, other.__class__):
+        if not isinstance(other, self.__class__):
             return NotImplemented
 
         return (
@@ -205,7 +205,7 @@ class SmaliInstrSGetSPut:
         return SmaliInstrSGetSPut(register_dest, class_name, field_name, field_type)
 
     def __eq__(self, other: Any):
-        if not isinstance(self, other.__class__):
+        if not isinstance(other, self.__class__):
             return NotImplemented
 
         return (
@@ -233,7 +233,7 @@ class SmaliInstrMoveResult:
         return SmaliInstrMoveResult(register)
 
     def __eq__(self, other: Any):
-        if not isinstance(self, other.__class__):
+        if not isinstance(other, self.__class__):
             return NotImplemented
 
         return self.register == other.register

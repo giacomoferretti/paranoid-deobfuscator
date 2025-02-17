@@ -58,7 +58,7 @@ class SmaliField:
         return f"SmaliField(name={self.name}, type={self.type}, modifiers={self.modifiers}, class_name={self.class_name}, init_value={self.init_value})"
 
     def __eq__(self, other: Any):
-        if not isinstance(self, other.__class__):
+        if not isinstance(other, self.__class__):
             return NotImplemented
 
         return (
@@ -149,7 +149,7 @@ class SmaliMethod:
         return f"SmaliMethod(method={self.method}, arguments={self.arguments}, return_type={self.return_type}, modifiers={self.modifiers}, class_name={self.class_name})"
 
     def __eq__(self, other: Any):
-        if not isinstance(self, other.__class__):
+        if not isinstance(other, self.__class__):
             return NotImplemented
 
         return (
