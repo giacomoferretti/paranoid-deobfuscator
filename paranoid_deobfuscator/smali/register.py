@@ -38,6 +38,9 @@ class SmaliRegister(ABC):
         """Return the type of the register."""
         pass
 
+    def to_dict(self):
+        return {"type": self.get_type(), "value": self.value}
+
 
 class SmaliRegisterConst(SmaliRegister):
     def validate_value(self, value):

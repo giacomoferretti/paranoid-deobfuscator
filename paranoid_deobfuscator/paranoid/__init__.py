@@ -25,6 +25,13 @@ __all__ = ["DeobfuscatorHelper", "RandomHelper"]
 logger = logging.getLogger(__name__)
 
 
+class SmaliRegisterEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, register.SmaliRegister):
+            return o.to_dict()
+        return super().default(o)
+
+
 class ParanoidSmaliParserError(Exception):
     """
     Exception raised for errors encountered by the Paranoid Smali Parser.
@@ -46,7 +53,7 @@ class ParanoidSmaliParserError(Exception):
         if not self.extra:
             return super().__str__()
 
-        return f"{super().__str__()}\n{json.dumps(self.extra, indent=4)}"
+        return f"{super().__str__()}\n{json.dumps(self.extra, indent=4, cls=SmaliRegisterEncoder)}"
 
 
 class ParanoidSmaliParser:
