@@ -73,7 +73,7 @@ Commands:
 ### DEX file (using [smali])
 
 1. Disassemble `.dex` file: `baksmali d classes.dex`
-2. Run deobfuscator: `paranoid-deobfuscator out` <!-- `paranoid-deobfuscator out` (or `python -m paranoid_deobfuscator out`) -->
+2. Run deobfuscator: `paranoid-deobfuscator deobfuscate out` <!-- `paranoid-deobfuscator out` (or `python -m paranoid_deobfuscator out`) -->
 3. Assemble: `smali a out`
 <!-- 4. Enjoy your deobfuscated dex! -->
 
