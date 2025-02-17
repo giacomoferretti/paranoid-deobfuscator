@@ -40,8 +40,8 @@ def extract_strings(target: str):
         with open(smali_file, "r") as f:
             smali_parser = paranoid.ParanoidSmaliParser(filename=str(smali_file))
 
-            for line in f:
-                smali_parser.update(line)
+            for line_num, line in enumerate(f):
+                smali_parser.update(line, line_num)
 
             # Add potential get string methods
             for method, data in smali_parser.methods.items():
@@ -94,8 +94,8 @@ def extract_strings(target: str):
         with open(smali_file, "r") as f:
             smali_parser = paranoid.ParanoidSmaliParser(filename=str(smali_file), target_method=get_string_method)
 
-            for line in f:
-                smali_parser.update(line)
+            for line_num, line in enumerate(f):
+                smali_parser.update(line, line_num)
 
             deobfuscation_values.extend(smali_parser.state["calls_to_target_method"])
 

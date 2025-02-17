@@ -175,7 +175,7 @@ class ParanoidSmaliParser:
 
         return line.split()[-1]
 
-    def update(self, line: str):
+    def update(self, line: str, line_number: int = 0):
         """
         Updates the internal state based on the provided Smali code line.
 
