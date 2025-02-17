@@ -365,8 +365,8 @@ class ParanoidSmaliParser:
 
             # Check if the value is a const-string
             if not isinstance(value, register.SmaliRegisterString):
-                logger.warning(f"Value register {instr.register_dest} is not a string")
-                logger.warning("Not supported yet")
+                # logger.warning(f"Value register {instr.register_dest} is not a string")
+                # logger.warning(f"{self._metadata}:{line_number+1} -> {line}")
                 return
 
             # Check if the index is a const
