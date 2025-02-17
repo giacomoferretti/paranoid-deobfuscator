@@ -39,6 +39,9 @@ SGET_SPUT = re.compile(
 INVOKE_STATIC = re.compile(
     r"invoke-static\s+{([vp][0-9]+(?:,\s*[vp][0-9]+)*)},\s+(L[a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/]+;)->([a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/\[\(\);]+)"  # noqa: E501
 )
+INVOKE_STATIC_RANGE = re.compile(
+    r"invoke-static/range\s*{([vp][0-9]+\s*\.\.\s*[vp][0-9]+)},\s*(L[a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/]+;)->([a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/\[\(\);]+)"  # noqa: E501
+)
 MOVE_RESULT = re.compile(r"move-result(?:-(?:wide|object))?\s+([vp][0-9]+)")  # noqa: E501
 
 
@@ -114,6 +117,36 @@ class SmaliInstrInvokeStatic:
         method = m.group(3)
 
         return SmaliInstrInvokeStatic(registers, class_name, method, _raw=data)
+
+    def __eq__(self, other: Any):
+        if not isinstance(other, self.__class__):
+            return NotImplemented
+
+        return self.registers == other.registers and self.class_name == other.class_name and self.method == other.method
+
+
+class SmaliInstrInvokeStaticRange:
+    def __init__(self, registers: list[str], class_name: str, method: str, _raw: str | None = None):
+        self.registers = registers
+        self.class_name = class_name
+        self.method = method
+        self._raw = _raw
+
+    @staticmethod
+    def parse(data: str):
+        data = data.strip()
+
+        m = INVOKE_STATIC_RANGE.match(data)
+        if not m:
+            raise ValueError("Invalid invoke-static/range instruction")
+
+        # TODO: do we need to include all the possible registers inside the range?
+        # For example: {v0 .. v5} -> v0, v1, v2, v3, v4, v5
+        registers = [x.strip() for x in m.group(1).split("..")]
+        class_name = m.group(2)
+        method = m.group(3)
+
+        return SmaliInstrInvokeStaticRange(registers, class_name, method, _raw=data)
 
     def __eq__(self, other: Any):
         if not isinstance(other, self.__class__):

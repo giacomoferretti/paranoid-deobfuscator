@@ -380,9 +380,14 @@ class ParanoidSmaliParser:
 
         if line.startswith("invoke-static"):
             try:
-                instr = instructions.SmaliInstrInvokeStatic.parse(line)
+                # Try to parse invoke-static/range first
+                instr = instructions.SmaliInstrInvokeStaticRange.parse(line)
+                instr = instructions.SmaliInstrInvokeStatic(instr.registers, instr.class_name, instr.method, instr._raw)
             except ValueError:
-                return
+                try:
+                    instr = instructions.SmaliInstrInvokeStatic.parse(line)
+                except ValueError:
+                    return
 
             method_name, method_arguments, method_return_type = SmaliMethod.parse_method_signature(instr.method)
 
