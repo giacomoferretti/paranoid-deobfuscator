@@ -20,22 +20,24 @@ from typing import Any
 # CONST_REGEX_PATTERN = r"const(?:/4|/16|/high16)?"
 # CONST_VALUE_REGEX_PATTERN = r"-?0x[0-9a-f]+"
 # REGISTER_REGEX_PATTERN = r"([vp][0-9]+)"
-# FULLY_CLASSIFIED_NAME = r"L[a-zA-Z0-9$_\- /]+;"
-# SIMPLE_NAME = r"[a-zA-Z0-9$_\- ]+"
+# FULLY_CLASSIFIED_NAME = r"L[a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/]+;"
+# SIMPLE_NAME = r"[a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF]+"
 # TYPE_DESCRIPTOR = r"\[*(?:" + FULLY_CLASSIFIED_NAME + r"|[VZBSCIJFD])"
 # STATIC_GET_PUT_FIELD_REGEX = r"(" + FULLY_CLASSIFIED_NAME + r")->(" + SIMPLE_NAME + r"):(" + TYPE_DESCRIPTOR + r")"
 
 CONST = re.compile(r"const(?:/4|/16|/high16|-wide(?:/16|/32|/high16)?)?\s+([vp][0-9]+),\s+(-?0x[0-9a-fA-F]+)")
 CONST_STRING = re.compile(r'const-string\s+([vp][0-9]+),\s+"(.+)"')
-NEW_ARRAY = re.compile(r"new-array\s+([vp][0-9]+),\s+([vp][0-9]+),\s+(\[*(?:L[a-zA-Z0-9$_\- /]+;|[VZBSCIJFD]))")
+NEW_ARRAY = re.compile(
+    r"new-array\s+([vp][0-9]+),\s+([vp][0-9]+),\s+(\[*(?:L[a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/]+;|[VZBSCIJFD]))"
+)
 AGET_APUT = re.compile(
     r"a(?:put|get)(?:-(?:wide|object|boolean|byte|char|short))?\s+([vp][0-9]+),\s+([vp][0-9]+),\s+([vp][0-9]+)"
 )
 SGET_SPUT = re.compile(
-    r"s(?:put|get)(?:-(?:wide|object|boolean|byte|char|short))?\s+([vp][0-9]+),\s+((L[a-zA-Z0-9$_\- /]+;)->([a-zA-Z0-9$_\- ]+):(\[*(?:L[a-zA-Z0-9$_\- /]+;|[VZBSCIJFD])))"
+    r"s(?:put|get)(?:-(?:wide|object|boolean|byte|char|short))?\s+([vp][0-9]+),\s+((L[a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/]+;)->([a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/]+):(\[*(?:L[a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/]+;|[VZBSCIJFD])))"
 )
 INVOKE_STATIC = re.compile(
-    r"invoke-static\s+{([vp][0-9]+(?:,\s*[vp][0-9]+)*)},\s+(L[a-zA-Z0-9$_\- /]+;)->([a-zA-Z0-9$_\- /\[\(\);]+)"
+    r"invoke-static\s+{([vp][0-9]+(?:,\s*[vp][0-9]+)*)},\s+(L[a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF]+;)->([a-zA-Z0-9$_\- /\[\(\);]+)"
 )
 MOVE_RESULT = re.compile(r"move-result(?:-(?:wide|object))?\s+([vp][0-9]+)")
 
