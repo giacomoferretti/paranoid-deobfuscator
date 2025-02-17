@@ -400,15 +400,20 @@ class ParanoidSmaliParser:
             first_register = instr.registers[0]
 
             # TODO: parameters are not supported
+            # This is a limitation of the current implementation.
+            # It is possible to support them, but it would require a more complex approach.
             if first_register.startswith("p"):
-                raise ParanoidSmaliParserError(
-                    "Parameters are not supported",
-                    extra={
-                        "registers": self.state["registers"],
-                        "register": first_register,
-                        "line": line,
-                    },
-                )
+                try:
+                    self.state["calls_to_target_method"].append(self.state["registers"][first_register])
+                except KeyError:
+                    raise ParanoidSmaliParserError(
+                        "Parameters are not supported",
+                        extra={
+                            "registers": self.state["registers"],
+                            "register": first_register,
+                            "line": line,
+                        },
+                    )
 
             try:
                 self.state["calls_to_target_method"].append(self.state["registers"][first_register])

@@ -17,7 +17,7 @@ import pathlib
 
 import click
 
-from .. import constants, paranoid
+from .. import constants, paranoid, report_github_issue_message
 from ..encoding import decode_unicode_chunks
 from ..smali import SmaliField, register
 
@@ -95,7 +95,17 @@ def extract_strings(target: str):
             smali_parser = paranoid.ParanoidSmaliParser(filename=str(smali_file), target_method=get_string_method)
 
             for line_num, line in enumerate(f):
-                smali_parser.update(line, line_num)
+                try:
+                    smali_parser.update(line, line_num)
+                except paranoid.ParanoidSmaliParserError as e:
+                    # Ignore Parameters are not supported
+                    if e.args[0] == "Parameters are not supported":
+                        logger.warning(f"{smali_file}:{line_num+1}: Detected unsupported method call")
+                        continue
+
+                    # Log and raise the error
+                    logger.error(report_github_issue_message(str(e)))
+                    raise e
 
             deobfuscation_values.extend(smali_parser.state["calls_to_target_method"])
 
