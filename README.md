@@ -71,7 +71,9 @@ Options:
   --help  Show this message and exit.
 
 Commands:
-  extract-strings  Extracts the strings from a paranoid obfuscated APK
+  deobfuscate-string  Deobfuscate a string using extracted chunks
+  extract-chunks      Save the chunks from a paranoid obfuscated APK
+  extract-strings     Extracts the strings from a paranoid obfuscated APK
 ```
 
 ### APK file (using [Apktool])
