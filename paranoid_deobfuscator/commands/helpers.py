@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import logging
 import pathlib
 
@@ -124,3 +125,77 @@ def extract_strings(target: str):
     # Deobfuscate the strings
     for x in values:
         print(f"[{x:x}]:{paranoid.deobfuscate_string(x, chunks, True)}")
+
+
+@cli.command(help="Save the chunks from a paranoid obfuscated APK")
+@click.argument("target", type=click.Path(exists=True, file_okay=False))
+@click.argument("output", type=click.Path(exists=False, dir_okay=False))
+def extract_chunks(target: str, output: str):
+    target_directory = pathlib.Path(target)
+
+    potential_get_string_methods = []
+    potential_obfuscated_string_arrays = []
+    for smali_file in target_directory.rglob("*.smali"):
+        with open(smali_file, "r") as f:
+            smali_parser = paranoid.ParanoidSmaliParser(filename=str(smali_file))
+
+            for line_num, line in enumerate(f):
+                smali_parser.update(line, line_num)
+
+            # Add potential get string methods
+            for method, data in smali_parser.methods.items():
+                if (
+                    data["consts"] == constants.PARANOID_GET_STRING_CONST_SIGNATURE
+                    and method.arguments == constants.PARANOID_GET_STRING_ARGUMENTS
+                    and method.return_type == constants.PARANOID_GET_STRING_RETURN_TYPE
+                ):
+                    potential_get_string_methods.append((method, data["sget_objects"]))
+
+            # Add potential obfuscated string arrays
+            for field, data in smali_parser.fields.items():
+                if field.type == "[Ljava/lang/String;":
+                    potential_obfuscated_string_arrays.append((field, data["value"]))
+
+    # Check if only one method is found
+    if len(potential_get_string_methods) != 1:
+        logger.error("Found more than one potential get string method")
+        logger.error("This is not supported yet")
+        return
+
+    get_string_method, get_string_fields = potential_get_string_methods[0]
+    get_string_field: SmaliField = get_string_fields[0]
+
+    # Check if only one field is found
+    if len(get_string_fields) != 1:
+        logger.error("Found more than one potential obfuscated string array")
+        logger.error("This is not supported yet")
+        return
+
+    # Extract the string chunks
+    chunks = []
+    for field, value in potential_obfuscated_string_arrays:
+        if field.class_name == get_string_field.class_name and field.name == get_string_field.name:
+            chunks = value
+
+    # Check if the chunks are found
+    if not chunks:
+        logger.error("No chunks found")
+        return
+
+    # Save chunks
+    with open(output, "w") as f:
+        json.dump(chunks, f, indent=4)
+
+
+@cli.command(help="Deobfuscate a string from a paranoid obfuscated APK")
+@click.argument("chunk_file", type=click.Path(exists=True, dir_okay=False))
+@click.argument("deobfuscation_long", type=int)
+def deobfuscate_string(chunk_file: str, deobfuscation_long: int):
+    chunks = []
+    with open(chunk_file, "r") as f:
+        chunks = json.load(f)
+
+    # Decode the chunks
+    chunks = decode_unicode_chunks(chunks)
+
+    print(f"[{deobfuscation_long:x}]:{paranoid.deobfuscate_string(deobfuscation_long, chunks, True)}")
