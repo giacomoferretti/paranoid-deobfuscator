@@ -20,6 +20,7 @@ from paranoid_deobfuscator.smali.instructions import (
     SmaliInstrConst,
     SmaliInstrConstString,
     SmaliInstrInvokeStatic,
+    SmaliInstrInvokeStaticRange,
     SmaliInstrMoveResult,
     SmaliInstrNewArray,
     SmaliInstrSGetSPut,
@@ -319,10 +320,35 @@ def test_valid_SmaliInstrSGetSPut_parse(input, expected_result):
             ),
         ),
         (
-            "invoke-static {p0, v1}, Ljava/util/Arrays;->copyOf([II)[I",
-            SmaliInstrInvokeStatic(["p0", "v1"], "Ljava/util/Arrays;", "copyOf([II)[I"),
+            "invoke-static{p0,p1},La;->a(J)Ljava/lang/String;",
+            SmaliInstrInvokeStatic(["p0", "p1"], "La;", "a(J)Ljava/lang/String;"),
         ),
     ],
 )
 def test_valid_SmaliInstrInvokeStatic_parse(input, expected_result):
     assert SmaliInstrInvokeStatic.parse(input) == expected_result
+
+
+@pytest.mark.parametrize(
+    "input, expected_result",
+    [
+        (
+            "invoke-static/range {v0 .. v1}, Ltest;->test(J)V",
+            SmaliInstrInvokeStaticRange(
+                ["v0", "v1"],
+                "Ltest;",
+                "test(J)V",
+            ),
+        ),
+        (
+            "invoke-static/range{v0..v1},Ltest;->test(J)V",
+            SmaliInstrInvokeStaticRange(
+                ["v0", "v1"],
+                "Ltest;",
+                "test(J)V",
+            ),
+        ),
+    ],
+)
+def test_valid_SmaliInstrInvokeStaticRange_parse(input, expected_result):
+    assert SmaliInstrInvokeStaticRange.parse(input) == expected_result
