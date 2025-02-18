@@ -25,19 +25,19 @@ from typing import Any
 # TYPE_DESCRIPTOR = r"\[*(?:" + FULLY_CLASSIFIED_NAME + r"|[VZBSCIJFD])"
 # STATIC_GET_PUT_FIELD_REGEX = r"(" + FULLY_CLASSIFIED_NAME + r")->(" + SIMPLE_NAME + r"):(" + TYPE_DESCRIPTOR + r")"
 
-CONST = re.compile(r"const(?:/4|/16|/high16|-wide(?:/16|/32|/high16)?)?\s+([vp][0-9]+),\s+(-?0x[0-9a-fA-F]+)")  # noqa: E501
-CONST_STRING = re.compile(r'const-string\s+([vp][0-9]+),\s+"(.+)"')  # noqa: E501
+CONST = re.compile(r"const(?:/4|/16|/high16|-wide(?:/16|/32|/high16)?)?\s+([vp][0-9]+),\s*(-?0x[0-9a-fA-F]+)")  # noqa: E501
+CONST_STRING = re.compile(r'const-string\s+([vp][0-9]+),\s*"(.+)"')  # noqa: E501
 NEW_ARRAY = re.compile(
-    r"new-array\s+([vp][0-9]+),\s+([vp][0-9]+),\s+(\[*(?:L[a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/]+;|[VZBSCIJFD]))"  # noqa: E501
+    r"new-array\s+([vp][0-9]+),\s*([vp][0-9]+),\s*(\[*(?:L[a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/]+;|[VZBSCIJFD]))"  # noqa: E501
 )
 AGET_APUT = re.compile(
-    r"a(?:put|get)(?:-(?:wide|object|boolean|byte|char|short))?\s+([vp][0-9]+),\s+([vp][0-9]+),\s+([vp][0-9]+)"  # noqa: E501
+    r"a(?:put|get)(?:-(?:wide|object|boolean|byte|char|short))?\s+([vp][0-9]+),\s*([vp][0-9]+),\s*([vp][0-9]+)"  # noqa: E501
 )
 SGET_SPUT = re.compile(
-    r"s(?:put|get)(?:-(?:wide|object|boolean|byte|char|short))?\s+([vp][0-9]+),\s+((L[a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/]+;)->([a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF]+):(\[*(?:L[a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/]+;|[VZBSCIJFD])))"  # noqa: E501
+    r"s(?:put|get)(?:-(?:wide|object|boolean|byte|char|short))?\s+([vp][0-9]+),\s*((L[a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/]+;)->([a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF]+):(\[*(?:L[a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/]+;|[VZBSCIJFD])))"  # noqa: E501
 )
 INVOKE_STATIC = re.compile(
-    r"invoke-static\s+{([vp][0-9]+(?:,\s*[vp][0-9]+)*)},\s+(L[a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/]+;)->([a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/\[\(\);]+)"  # noqa: E501
+    r"invoke-static\s*{([vp][0-9]+(?:,\s*[vp][0-9]+)*)},\s*(L[a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/]+;)->([a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/\[\(\);]+)"  # noqa: E501
 )
 INVOKE_STATIC_RANGE = re.compile(
     r"invoke-static/range\s*{([vp][0-9]+\s*\.\.\s*[vp][0-9]+)},\s*(L[a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/]+;)->([a-zA-Z0-9$_\- \u00A0-\u1FFF\u2000-\u200A\u2010-\u2027\u202F\u2030-\uD7FF\uE000-\uFFEF\U00010000-\U0010FFFF/\[\(\);]+)"  # noqa: E501
