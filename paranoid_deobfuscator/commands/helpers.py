@@ -187,7 +187,7 @@ def extract_chunks(target: str, output: str):
         json.dump(chunks, f, indent=4)
 
 
-@cli.command(help="Deobfuscate a string from a paranoid obfuscated APK")
+@cli.command(help="Deobfuscate a string using extracted chunks")
 @click.argument("chunk_file", type=click.Path(exists=True, dir_okay=False))
 @click.argument("deobfuscation_long", type=int)
 def deobfuscate_string(chunk_file: str, deobfuscation_long: int):
