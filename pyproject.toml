@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "paranoid-deobfuscator"
-version = "3.0.1"
+version = "3.0.2"
 description = "Deobfuscate \"paranoid\" obfuscated apps"
 authors = ["Giacomo Ferretti <giacomo.ferretti.00@gmail.com>"]
 readme = "README.md"
