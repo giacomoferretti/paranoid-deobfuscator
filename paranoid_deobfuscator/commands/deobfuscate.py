@@ -106,7 +106,7 @@ class ParanoidSmaliDeobfuscator:
 
     def process(self, line: str, line_num: int) -> str | None:
         # Reset the state if the result from the getString method is not used
-        if self.state["last_deobfuscated_string"] and line.startswith("invoke"):
+        if self.state["last_deobfuscated_string"] and (line.startswith("invoke") or line.startswith("if-")):
             self.state["last_deobfuscated_string"] = None
 
         if line.startswith(":try_start"):
